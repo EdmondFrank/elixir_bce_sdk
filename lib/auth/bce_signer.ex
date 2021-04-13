@@ -23,7 +23,7 @@ defmodule ElixirBceSdk.Auth.BceSigner do
     headers_array = canonical_headers
     |> Enum.map(fn {k,_} -> String.downcase(k) end)
 
-    { :ok, ret_array, headers_array }
+    { ret_array, headers_array }
   end
 
   def get_canonical_uri_path(path) do
@@ -34,7 +34,7 @@ defmodule ElixirBceSdk.Auth.BceSigner do
       if encoded_path |> String.starts_with?("/") do
         encoded_path
       else
-        "#{encoded_path}"
+        "/#{encoded_path}"
       end
     end
   end
@@ -77,7 +77,7 @@ defmodule ElixirBceSdk.Auth.BceSigner do
 
     canonical_querystring = get_canonical_querystring(params, true)
 
-    {:ok, canonical_headers, headers_to_sign} = get_canonical_headers(headers, headers_to_sign)
+    {canonical_headers, headers_to_sign} = get_canonical_headers(headers, headers_to_sign)
 
     canonical_request = Enum.join([http_method, canonical_uri, canonical_querystring, canonical_headers], "\n")
 
