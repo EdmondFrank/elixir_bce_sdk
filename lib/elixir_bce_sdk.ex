@@ -1,18 +1,19 @@
 defmodule ElixirBceSdk do
+  alias ElixirBceSdk.MixProject
   @moduledoc """
-  Documentation for `ElixirBceSdk`.
+  This is a simple client library for bce/bos
   """
 
   @doc """
-  Hello world.
-
-  ## Examples
-
-      iex> ElixirBceSdk.hello()
-      :world
-
+  Get configuration
   """
-  def hello do
-    :world
+  def config do
+    Keyword.merge(default_config(), Application.get_env(:elixir_bce_sdk, :config, []))
+  end
+
+  defp default_config do
+    [
+      user_agent: "bce-elixir-sdk/#{MixProject.project[:version]}"
+    ]
   end
 end
