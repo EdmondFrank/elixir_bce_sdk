@@ -7,7 +7,7 @@ defmodule ElixirBceSdk.Auth.BceSigner do
   alias ElixirBceSdk.Auth.BceCredentials
   def get_canonical_headers(headers, nil), do: get_canonical_headers(headers, ["host", "content-md5", "content-length", "content-type"])
 
-  def get_canonical_headers(headers = %{}, headers_to_sign) do
+  def get_canonical_headers(headers, headers_to_sign) do
 
     canonical_headers = headers
     |> Enum.filter(fn {k,v} ->
@@ -43,10 +43,10 @@ defmodule ElixirBceSdk.Auth.BceSigner do
   def get_canonical_querystring(params, _) when map_size(params) == 0, do: ""
   def get_canonical_querystring(params = %{}, for_signature) do
     Enum.filter(params, fn {k, _} ->
-      !for_signature || String.downcase(k) != String.downcase(Constants.authorization)
+      !for_signature || String.downcase(to_string(k)) != String.downcase(Constants.authorization)
     end)
     |> Enum.map(fn {k, v} ->
-      "#{URI.encode_www_form(k)}=#{URI.encode_www_form(v)}"
+      "#{URI.encode_www_form(to_string(k))}=#{URI.encode_www_form(to_string(v))}"
     end)
     |> Enum.join("&")
   end
@@ -67,7 +67,6 @@ defmodule ElixirBceSdk.Auth.BceSigner do
     |> DateTime.to_iso8601
 
     sign_key_info = "bce-auth-v1/#{credentials.access_key_id}/#{sign_date_time}/#{expiration_in_seconds}"
-    |> IO.inspect
 
     sign_key = :crypto.hmac(:sha256, credentials.secret_access_key, sign_key_info)
     |> Base.encode16
@@ -82,7 +81,8 @@ defmodule ElixirBceSdk.Auth.BceSigner do
     canonical_request = Enum.join([http_method, canonical_uri, canonical_querystring, canonical_headers], "\n")
 
     signature = :crypto.hmac(:sha256, sign_key, canonical_request)
-    |> Base.encode16 |> String.downcase
+    |> Base.encode16
+    |> String.downcase
 
     headers_str = Enum.join(headers_to_sign, ";")
 
