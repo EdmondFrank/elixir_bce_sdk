@@ -43,7 +43,21 @@ defmodule ElixirBceSdk.Bos.Client do
     send_request("GET", bucket_name, %{ location: "" }) |> wrap
   end
 
+  @doc """
+  Get Access Control Level of bucket.
+  """
+  def get_bucket_acl(bucket_name) do
+    send_request("GET", bucket_name, %{ acl: "" }) |> wrap
+  end
 
+  @doc """
+  Set Access Control Level of bucket by headers.
+  """
+  def set_bucket_canned_acl(bucket_name, canned_acl) do
+    params = %{ acl: "" }
+    headers = %{ "x-bce-acl" => canned_acl }
+    send_request("PUT", bucket_name, params, "", headers) |> wrap
+  end
 
   defp base_url, do: "http://#{ElixirBceSdk.config[:endpoint]}"
 
@@ -84,10 +98,10 @@ defmodule ElixirBceSdk.Bos.Client do
     save_path \\ nil,
     return_body \\ false) do
 
-    path = Path.join(["/", bucket_name, key]) <> "/"
+    path = Path.join(["/", bucket_name, key])
 
     query = BceSigner.get_canonical_querystring(params, false)
-    path = if query != "", do: "#{path}?#{query}", else: path
+    path_uri = if query != "", do: "#{path}?#{query}", else: path
 
     timestamp = :os.system_time(:second)
 
@@ -112,7 +126,7 @@ defmodule ElixirBceSdk.Bos.Client do
     headers = headers ++ [{ Constants.authorization, authorization }]
     %Request {
       method: http_method,
-      url: base_url <> path,
+      url: base_url <> path_uri,
       headers: headers,
       body: body,
     } |> HTTPoison.request
