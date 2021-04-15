@@ -1,6 +1,7 @@
 defmodule ElixirBceSdk.Bos.Client do
 
   alias HTTPoison.Request
+  alias ElixirBceSdk.Bos
   alias ElixirBceSdk.Http.Constants
   alias ElixirBceSdk.Auth.BceSigner
   alias ElixirBceSdk.Auth.BceCredentials
@@ -59,6 +60,26 @@ defmodule ElixirBceSdk.Bos.Client do
     send_request("PUT", bucket_name, params, "", headers) |> wrap
   end
 
+  @doc """
+  Put object to BOS.
+  """
+  def put_object(bucket_name, key, data, content_md5, content_length, options) do
+    if content_length > Bos.Constants.max_put_object_length do
+      {:error, "Object length should be less than #{Bos.Constants.max_put_object_length}"}
+    else
+      headers = Map.merge(%{
+            "Content-MD5" => content_md5,
+            "Content-Length" => content_length }, options)
+
+      headers = if headers["Content-Type"] == nil do
+        Map.merge(headers, %{"Content-Type" => Constants.octet_stream_type})
+      else
+        headers
+      end
+      send_request("PUT", bucket_name, %{}, key, headers, data) |> wrap
+    end
+  end
+
   defp base_url, do: "http://#{ElixirBceSdk.config[:endpoint]}"
 
   defp host, do: ElixirBceSdk.config[:endpoint]
@@ -108,7 +129,12 @@ defmodule ElixirBceSdk.Bos.Client do
     sign_date_time = DateTime.from_unix!(timestamp)
     |> DateTime.to_iso8601
 
-    body = (if map_size(body) == 0, do: "", else: Poison.encode!(body))
+    body = cond do
+      is_map(body) -> (if map_size(body) == 0, do: "", else: Poison.encode!(body))
+      true -> body
+    end
+
+
 
     headers = Map.to_list(headers) ++ [
       { "UserAgent", ElixirBceSdk.config[:user_agent] },
