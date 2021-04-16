@@ -12,21 +12,21 @@ defmodule ElixirBceSdk.Bos.Client do
   returns all buckets owned by the user.
   """
   def list_buckets() do
-   http_get() |> send_request() |> wrap
+    http_get() |> send_request()
   end
 
   @doc """
   Create bucket with specific name.
   """
   def create_bucket(bucket_name) do
-    http_put() |> send_request(bucket_name) |> wrap
+    http_put() |> send_request(bucket_name)
   end
 
   @doc """
   Delete bucket with specific name.
   """
   def delete_bucket(bucket_name) do
-    http_delete() |> send_request(bucket_name) |> wrap
+    http_delete() |> send_request(bucket_name)
   end
 
   @doc """
@@ -42,7 +42,7 @@ defmodule ElixirBceSdk.Bos.Client do
   """
   def get_bucket_location(bucket_name) do
     params = %{ location: "" }
-    http_get() |> send_request(bucket_name, params) |> wrap
+    http_get() |> send_request(bucket_name, params)
   end
 
   @doc """
@@ -50,7 +50,17 @@ defmodule ElixirBceSdk.Bos.Client do
   """
   def get_bucket_acl(bucket_name) do
     params = %{ acl: "" }
-    http_get() |> send_request(bucket_name, params) |> wrap
+    http_get() |> send_request(bucket_name, params)
+  end
+
+  @doc """
+  Set Access Control Level of bucket by body.
+  """
+  def set_bucket_acl(bucket_name, acl) do
+    params = %{ acl: "" }
+    headers = %{ http_content_type() => http_json_type() }
+    body = %{ accessControlList: acl }
+    http_put() |> send_request(bucket_name, params, "", headers, body)
   end
 
   @doc """
@@ -59,7 +69,7 @@ defmodule ElixirBceSdk.Bos.Client do
   def set_bucket_canned_acl(bucket_name, canned_acl) do
     params = %{ acl: "" }
     headers = %{ http_bce_acl() => canned_acl }
-    http_put() |> send_request(bucket_name, params, "", headers) |> wrap
+    http_put() |> send_request(bucket_name, params, "", headers)
   end
 
   @doc """
@@ -67,7 +77,7 @@ defmodule ElixirBceSdk.Bos.Client do
   """
   def get_bucket_lifecycle(bucket_name) do
     params = %{ lifecycle: "" }
-    http_get() |> send_request(bucket_name, params) |> wrap
+    http_get() |> send_request(bucket_name, params)
   end
 
   @doc """
@@ -77,7 +87,133 @@ defmodule ElixirBceSdk.Bos.Client do
     params = %{ lifecycle: "" }
     headers = %{ http_content_type() => http_json_type() }
     body = %{ rule: rules }
-    http_put() |> send_request(bucket_name, params, "", headers, body) |> wrap
+    http_put() |> send_request(bucket_name, params, "", headers, body)
+  end
+
+  @doc """
+  Delete Bucket Lifecycle
+  """
+  def delete_bucket_lifecycle(bucket_name) do
+    params = %{ lifecycle: "" }
+    http_delete() |> send_request(bucket_name, params)
+  end
+
+  @doc """
+  Get Bucket Storageclass.
+  """
+  def get_bucket_storageclass(bucket_name) do
+    params = %{ storageClass: "" }
+    http_get() |> send_request(bucket_name, params)
+  end
+
+  @doc """
+  Put Bucket Storageclass
+  """
+  def put_bucket_storageclass(bucket_name, storage_class) do
+    params = %{ storageClass: "" }
+    headers = %{ http_content_length() => http_json_type() }
+    body = %{ storageClass: storage_class }
+    http_put() |> send_request(bucket_name, params, "", headers, body)
+  end
+
+  @doc """
+  Put Bucket Cors
+  """
+  def put_bucket_cors(bucket_name, cors_configuration) do
+    params = %{ cors: "" }
+    headers = %{ http_content_type() => http_json_type() }
+    body = %{ corsConfiguration: cors_configuration }
+    http_put() |> send_request(bucket_name, params, "", headers, body)
+  end
+
+  @doc """
+  Get Bucket Cors.
+  """
+  def get_bucket_cors(bucket_name) do
+    params = %{ cors: "" }
+    http_get() |> send_request(bucket_name, params)
+  end
+
+  @doc """
+  Delete Bucket Cors
+  """
+  def delete_bucket_cors(bucket_name) do
+    params = %{ cors: "" }
+    http_delete() |> send_request(bucket_name, params)
+  end
+
+  @doc """
+  Get Bucket Logging.
+  """
+  def get_bucket_logging(bucket_name) do
+    params = %{ logging: "" }
+    http_get() |> send_request(bucket_name, params)
+  end
+
+  @doc """
+  Put Bucket Logging.
+  """
+  def put_bucket_logging(source_bucket, target_bucket, target_prefix \\ "") do
+    params = %{ logging: "" }
+    headers = %{ http_content_type() => http_json_type() }
+    body = %{ targetBucket: target_bucket, targetPrefix: target_prefix }
+    http_put() |> send_request(source_bucket, params, "", headers, body)
+  end
+
+  @doc """
+  Delete Bucket Logging.
+  """
+  def delete_bucket_logging(bucket_name) do
+    params = %{ logging: "" }
+    http_delete() |> send_request(bucket_name, params)
+  end
+
+  @doc """
+  Get Object Information of bucket.
+  """
+  def list_objects(bucket_name, options \\ %{}) do
+    params = Map.merge(%{ maxKeys: 1000 }, options)
+    http_get() |> send_request(bucket_name, params)
+  end
+
+  @doc """
+  Get object of bucket.
+  """
+  def get_object(bucket_name, key, range \\ nil, save_path \\ nil, return_body \\ true) do
+    headers = cond do
+      is_nil(range) -> %{}
+      !is_list(range) ->
+        raise BceClientException, message: "range type should be a array"
+      !(length(range) == 2) ->
+        raise BceClientException, message: "range should have length of 2"
+      !Enum.all?([], &is_number/1) ->
+        raise BceClientException, message: "range all element should be integer"
+      true ->
+        [s, e] = range
+        %{ http_range() => "bytes=#{s}-#{e}" }
+    end
+    http_get() |> send_request(bucket_name, %{}, key, headers, "", save_path, return_body)
+  end
+
+  @doc """
+  Get object as string
+  """
+  def get_object_as_string(bucket_name, key, range \\ nil) do
+    get_object(bucket_name, key, range)
+  end
+
+  @doc """
+  Get object to file
+  """
+  def get_object_to_file(bucket_name, key, save_path, range \\ nil) do
+    get_object(bucket_name, key, range, save_path, true)
+  end
+
+  @doc """
+  Get mete of object
+  """
+  def get_object_meta_data(bucket_name, key) do
+    http_head() |> send_request(bucket_name, %{}, key)
   end
 
   @doc """
@@ -97,30 +233,13 @@ defmodule ElixirBceSdk.Bos.Client do
       else
         headers
       end
-      http_put() |> send_request(bucket_name, %{}, key, headers, data) |> wrap
+      http_put() |> send_request(bucket_name, %{}, key, headers, data)
     end
   end
 
   defp base_url, do: "http://#{ElixirBceSdk.config[:endpoint]}"
 
   defp host, do: ElixirBceSdk.config[:endpoint]
-
-  defp status(response) do
-    case response do
-      { :ok, res } -> res.status_code
-      { :error, res } -> { :error, res }
-    end
-  end
-
-  defp wrap(response) do
-    case response do
-      { :ok, res } -> case  Poison.decode(res.body) do
-                        { :ok, decode_body } -> { :ok, decode_body }
-                        { :error, _raw } -> { :ok, res.body }
-                      end
-      { :error, reason } -> { :error, reason }
-    end
-  end
 
   defp send_request(
     http_method,
@@ -164,11 +283,43 @@ defmodule ElixirBceSdk.Bos.Client do
 
     headers = headers ++ [{ http_authorization(), authorization }]
 
-    %Request {
-      method: http_method,
-      url: base_url() <> path_uri,
-      headers: headers,
-      body: body,
-    } |> HTTPoison.request
+    %Request{ method: http_method, url: base_url() <> path_uri, headers: headers, body: body, }
+    |> HTTPoison.request
+    |> generate_response(return_body)
+    |> generate_file(save_path)
+  end
+
+  defp generate_response(response, return_body) do
+    case response do
+      { :ok, res } ->
+        if return_body do
+          res.body
+        else
+          case  Poison.decode(res.body) do
+            { :ok, decode_body } -> { :ok, res.status_code, decode_body }
+            { :error, %{value: ""} } -> { :ok, res.status_code, res.headers }
+            { :error, _raw } -> { :ok, res.status_code, res.body }
+          end
+        end
+      { :error, reason } -> { :error, reason }
+    end
+  end
+
+  defp generate_file(response, save_path) do
+    if save_path do
+      case File.write(save_path, response) do
+        :ok -> {:ok, "Response save file path: #{save_path}"}
+        {:error, reason} -> { :error, reason }
+      end
+    else
+      response
+    end
+  end
+
+  defp status(response) do
+    case response do
+      { :ok, status, _res } -> status
+      { :error, res } -> { :error, res }
+    end
   end
 end

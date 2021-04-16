@@ -13,6 +13,7 @@ defmodule ElixirBceSdk.Http.Constants do
   const :http_content_md5, "Content-MD5"
   const :http_content_length, "Content-Length"
   const :http_user_agent, "User-Agent"
+  const :http_range, "Range"
 
   const :http_put, "PUT"
   const :http_get, "GET"
