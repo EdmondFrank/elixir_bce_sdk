@@ -105,14 +105,6 @@ defmodule ElixirBceSdk.Bos.Client do
 
   defp host, do: ElixirBceSdk.config[:endpoint]
 
-  defp credentials do
-    %BceCredentials{
-      access_key_id: ElixirBceSdk.config[:access_key_id],
-      secret_access_key: ElixirBceSdk.config[:secret_access_key],
-      security_token: ElixirBceSdk.config[:security_token]
-    }
-  end
-
   defp status(response) do
     case response do
       { :ok, res } -> res.status_code
@@ -163,7 +155,9 @@ defmodule ElixirBceSdk.Bos.Client do
     ]
 
     authorization = BceSigner.sign(
-      credentials(), http_method, path,
+      BceCredentials.credentials(),
+      http_method,
+      path,
       Enum.reduce(headers, %{}, fn {k,v}, acc -> Map.put(acc, k, v) end),
       params, timestamp
     )

@@ -13,4 +13,12 @@ defmodule ElixirBceSdk.Auth.BceCredentials do
       security_token: security_token,
     }
   end
+
+  def credentials do
+    %BceCredentials{
+      access_key_id: ElixirBceSdk.config[:access_key_id],
+      secret_access_key: ElixirBceSdk.config[:secret_access_key],
+      security_token: ElixirBceSdk.config[:security_token]
+    }
+  end
 end
