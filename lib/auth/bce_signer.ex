@@ -5,6 +5,7 @@ defmodule ElixirBceSdk.Auth.BceSigner do
   """
   alias ElixirBceSdk.Auth.BceCredentials
 
+  import ElixirBceSdk.Utils
   import ElixirBceSdk.Http.Constants
 
   def get_canonical_headers(headers, nil), do: get_canonical_headers(headers, ["host", "content-md5", "content-length", "content-type"])
@@ -13,17 +14,15 @@ defmodule ElixirBceSdk.Auth.BceSigner do
 
     canonical_headers = headers
     |> Enum.filter(fn {k,v} ->
-      to_string(v) |> String.trim != "" && (String.downcase(k) in headers_to_sign || String.downcase(k) |> String.starts_with?(http_bce_prefix))
+      to_s_trim(v) != "" && (to_s_down(k) in headers_to_sign || to_s_down(k) |> String.starts_with?(http_bce_prefix()))
     end)
 
     ret_array = canonical_headers
-    |> Enum.map(fn {k,v} ->
-      "#{String.downcase(k) |> URI.encode_www_form}:#{to_string(v) |> String.trim |> URI.encode_www_form}"
-    end)
+    |> Enum.map(fn {k,v} -> "#{to_s_down_encode(k)}:#{to_s_trim_encode(v)}" end)
     |> Enum.join("\n")
 
     headers_array = canonical_headers
-    |> Enum.map(fn {k,_} -> String.downcase(k) end)
+    |> Enum.map(fn {k,_} -> to_s_down(k) end)
 
     { ret_array, headers_array }
   end
@@ -32,7 +31,7 @@ defmodule ElixirBceSdk.Auth.BceSigner do
     if to_string(path) == "" do
       "/"
     else
-      encoded_path = to_string(path) |> URI.encode_www_form |> String.replace("%2F", "/")
+      encoded_path = to_s_encode(path) |> String.replace("%2F", "/")
       if encoded_path |> String.starts_with?("/") do
         encoded_path
       else
@@ -44,12 +43,8 @@ defmodule ElixirBceSdk.Auth.BceSigner do
   def get_canonical_querystring(nil, _), do: ""
   def get_canonical_querystring(params, _) when map_size(params) == 0, do: ""
   def get_canonical_querystring(params = %{}, for_signature) do
-    Enum.filter(params, fn {k, _} ->
-      !for_signature || String.downcase(to_string(k)) != String.downcase(http_authorization())
-    end)
-    |> Enum.map(fn {k, v} ->
-      "#{URI.encode_www_form(to_string(k))}=#{URI.encode_www_form(to_string(v))}"
-    end)
+    Enum.filter(params, fn {k, _} -> !for_signature || to_s_down(k) != to_s_down(http_authorization()) end)
+    |> Enum.map(fn {k, v} -> "#{urlencode(to_string(k))}=#{urlencode(to_string(v))}" end)
     |> Enum.join("&")
   end
 

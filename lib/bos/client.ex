@@ -67,7 +67,7 @@ defmodule ElixirBceSdk.Bos.Client do
   """
   def get_bucket_lifecycle(bucket_name) do
     params = %{ lifecycle: "" }
-    http_get() |> send_request(bucket_name, params)
+    http_get() |> send_request(bucket_name, params) |> wrap
   end
 
   @doc """
