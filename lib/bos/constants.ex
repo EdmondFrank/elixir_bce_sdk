@@ -1,3 +1,4 @@
 defmodule ElixirBceSdk.Bos.Constants do
-  def max_put_object_length, do: 5 * 1024 * 1024 * 1024
+  import Constants
+  const :bos_max_put_object_length, 5 * 1024 * 1024 * 1024
 end

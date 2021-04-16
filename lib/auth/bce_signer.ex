@@ -3,15 +3,17 @@ defmodule ElixirBceSdk.Auth.BceSigner do
   module about authorization
   Reference https://cloud.baidu.com/doc/Reference/s/Njwvz1wot
   """
-  alias ElixirBceSdk.Http.Constants
   alias ElixirBceSdk.Auth.BceCredentials
+
+  import ElixirBceSdk.Http.Constants
+
   def get_canonical_headers(headers, nil), do: get_canonical_headers(headers, ["host", "content-md5", "content-length", "content-type"])
 
   def get_canonical_headers(headers, headers_to_sign) do
 
     canonical_headers = headers
     |> Enum.filter(fn {k,v} ->
-      to_string(v) |> String.trim != "" && (String.downcase(k) in headers_to_sign || String.downcase(k) |> String.starts_with?(Constants.bce_prefix))
+      to_string(v) |> String.trim != "" && (String.downcase(k) in headers_to_sign || String.downcase(k) |> String.starts_with?(http_bce_prefix))
     end)
 
     ret_array = canonical_headers
@@ -43,7 +45,7 @@ defmodule ElixirBceSdk.Auth.BceSigner do
   def get_canonical_querystring(params, _) when map_size(params) == 0, do: ""
   def get_canonical_querystring(params = %{}, for_signature) do
     Enum.filter(params, fn {k, _} ->
-      !for_signature || String.downcase(to_string(k)) != String.downcase(Constants.authorization)
+      !for_signature || String.downcase(to_string(k)) != String.downcase(http_authorization())
     end)
     |> Enum.map(fn {k, v} ->
       "#{URI.encode_www_form(to_string(k))}=#{URI.encode_www_form(to_string(v))}"
