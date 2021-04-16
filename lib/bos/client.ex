@@ -1,6 +1,7 @@
 defmodule ElixirBceSdk.Bos.Client do
 
   alias HTTPoison.Request
+  alias ElixirBceSdk.Utils
   alias ElixirBceSdk.Auth.BceSigner
   alias ElixirBceSdk.Auth.BceCredentials
 
@@ -221,12 +222,14 @@ defmodule ElixirBceSdk.Bos.Client do
   """
   def put_object(bucket_name, key, data, content_md5, content_length, options) do
     if content_length > bos_max_put_object_length() do
-      {:error, "Object length should be less than #{bos_max_put_object_length()}"}
+      raise BceClientException, message: "Object length should be less than #{bos_max_put_object_length()}"
     else
-      headers = Map.merge(%{
-            http_content_md5() => content_md5,
-            http_content_length() => content_length
-                          }, options)
+      headers = Map.merge(
+        %{
+          http_content_md5() => content_md5,
+          http_content_length() => content_length
+        }, options
+      )
 
       headers = if headers[http_content_type()] == nil do
         Map.merge(headers, %{ http_content_type() => http_octet_stream() })
@@ -237,7 +240,67 @@ defmodule ElixirBceSdk.Bos.Client do
     end
   end
 
+  @doc """
+  Create object and put content of string to the object.
+  """
+  def put_object_from_string(bucket_name, key, data, options \\ %{}) do
+    data_md5 = :crypto.hash(:md5, data) |> Base.encode64
+    put_object(bucket_name, key, data, data_md5, String.length(data), options)
+  end
+
+  @doc """
+  Put object and put content of file to the object.
+  """
+  def put_object_from_file(bucket_name, key, file_name, options \\ %{}) do
+    options = if options[http_content_type()] == nil do
+      Map.put(options, http_content_type(), MIME.from_path(file_name))
+    else
+      options
+    end
+
+    case File.read(file_name) do
+      {:ok, data} ->
+        content_length = byte_size(data)
+        data_md5 = Utils.get_md5_from_file(file_name, content_length)
+        put_object(bucket_name, key, data, data_md5, content_length, options)
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+
+  @doc """
+  Get an authorization url with expire time
+  """
+  def generate_pre_signed_url(bucket_name, key, options \\ %{}) do
+    headers = options["headers"] || %{}
+    params = options["params"] || %{}
+
+    path = "/" <> key
+
+    headers = Map.put(headers, http_host(), "#{bucket_name}.#{host()}")
+
+    signture = BceSigner.sign(
+      BceCredentials.credentials(),
+      http_get(),
+      path,
+      headers,
+      params,
+      options["timestamp"],
+      options["expiration_in_seconds"] || 1800,
+      options['headers_to_sign']
+    )
+
+    params = Map.put(params, Utils.to_s_down(http_authorization()), signture)
+
+    query = BceSigner.get_canonical_querystring(params, false)
+    path_uri = if query != "", do: "#{path}?#{query}", else: path
+
+    base_url(bucket_name) <> path_uri
+  end
+
   defp base_url, do: "http://#{ElixirBceSdk.config[:endpoint]}"
+  defp base_url(bucket_name), do: "http://#{bucket_name}.#{ElixirBceSdk.config[:endpoint]}"
 
   defp host, do: ElixirBceSdk.config[:endpoint]
 
