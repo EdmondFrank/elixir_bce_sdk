@@ -372,6 +372,16 @@ defmodule ElixirBceSdk.Bos.Client do
   end
 
   @doc """
+  Delete Multiple Objects.
+  """
+  def delete_multiple_objects(bucket_name, key_list) do
+    params = %{ delete: "" }
+    key_arr = Enum.map(key_list, fn item -> %{ key: item } end)
+    body = %{ objects: key_arr }
+    http_post() |> send_request(bucket_name, params, "", %{}, body)
+  end
+
+  @doc """
   Initialize multi_upload_file.
   """
   def initialize_multipart_upload(bucket_name, key, options \\ %{}) do
@@ -490,6 +500,40 @@ defmodule ElixirBceSdk.Bos.Client do
   """
   def abort_multipart_upload(bucket_name, key, upload_id) do
     params = %{ uploadId: upload_id }
+    http_delete() |> send_request(bucket_name, params, key)
+  end
+
+  @doc """
+  Get object acl.
+  """
+  def get_object_acl(bucket_name, key) do
+    params = %{ acl: "" }
+    http_get() |> send_request(bucket_name, params, key)
+  end
+
+  @doc """
+  Set object acl by body.
+  """
+  def set_object_acl(bucket_name, key, acl) do
+    params = %{ acl: "" }
+    headers = %{ http_content_type() => http_json_type() }
+    body = %{ accessControlList: acl }
+    http_put() |> send_request(bucket_name, params, key, headers, body)
+  end
+
+  @doc """
+  Set object acl by headers.
+  """
+  def set_object_canned_acl(bucket_name, key, canned_acl \\ %{}) do
+    params = %{ acl: "" }
+    http_put() |> send_request(bucket_name, params, key, canned_acl)
+  end
+
+  @doc """
+  Delete object acl.
+  """
+  def delete_object_acl(bucket_name, key) do
+    params = %{ acl: "" }
     http_delete() |> send_request(bucket_name, params, key)
   end
 
