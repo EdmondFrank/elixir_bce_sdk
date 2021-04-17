@@ -303,7 +303,6 @@ defmodule ElixirBceSdk.Bos.Client do
   @doc """
   Copy one object to another object.
   """
-
   def copy_object(source_bucket_name, source_key, target_bucket_name, target_key, options \\ %{}) do
     headers = options
 
@@ -311,7 +310,7 @@ defmodule ElixirBceSdk.Bos.Client do
       Map.put(headers, http_bce_copy_source_if_match(), headers['etag'])
     else
       headers
-    end |> IO.inspect(label: "current_header")
+    end
 
     headers = case headers["user-metadata"] do
                 nil ->
@@ -319,13 +318,41 @@ defmodule ElixirBceSdk.Bos.Client do
                 _ ->
                   headers = Map.put(headers, http_bce_copy_meta_data_directive(), "replace")
                   populate_headers_with_user_metadata(headers)
-              end |> IO.inspect(label: "modified headers")
+              end
 
     headers = Map.put(headers,
       http_bce_copy_source(),
       BceSigner.get_canonical_uri_path("/#{source_bucket_name}/#{source_key}")
     )
     http_put() |> send_request(target_bucket_name, %{}, target_key, headers)
+  end
+
+  @doc """
+  Put an appendable object to BOS or add content to an appendable object.
+  """
+  def append_object(bucket_name, key, data, offset, content_md5, content_length, options \\ %{}) do
+    if content_length > bos_max_append_object_length() do
+      raise BceClientException, message: "Object length should be less than #{bos_max_append_object_length()}. Use multi-part upload instead."
+    end
+    params = %{ append: "" }
+    params = if offset != nil do
+      Map.put(params, :offset, offset)
+    else
+      params
+    end
+    headers = Map.merge(
+      %{
+        http_content_md5() => content_md5,
+        http_content_length() => content_length,
+      },options
+    )
+    headers = if headers["user-metadata"] != nil do
+      populate_headers_with_user_metadata(headers)
+    else
+      headers
+    end
+
+    http_post() |> send_request(bucket_name, params, key, headers, data)
   end
 
   defp base_url, do: "http://#{ElixirBceSdk.config[:endpoint]}"
