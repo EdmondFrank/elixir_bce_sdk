@@ -355,6 +355,144 @@ defmodule ElixirBceSdk.Bos.Client do
     http_post() |> send_request(bucket_name, params, key, headers, data)
   end
 
+  @doc """
+  Create an appendable object and put content of string to the object
+  or add content of string to an appendable object.
+  """
+  def append_object_from_string(bucket_name, key, data, options \\ %{}) do
+    data_md5 = :crypto.hash(:md5, data) |> Base.encode64
+    append_object(bucket_name, key, data, options["offset"], data_md5, String.length(data), options)
+  end
+
+  @doc """
+  Delete Object
+  """
+  def delete_object(bucket_name, key) do
+    http_delete() |> send_request(bucket_name, %{}, key)
+  end
+
+  @doc """
+  Initialize multi_upload_file.
+  """
+  def initialize_multipart_upload(bucket_name, key, options \\ %{}) do
+    params = %{ uploads: "" }
+    http_post() |> send_request(bucket_name, params, key, options)
+  end
+
+  @doc """
+  Upload a part
+  """
+  def upload_part(bucket_name, key, upload_id, part_number, part_size, data, options \\ %{}) do
+    headers = options
+    params = %{ partNumber: part_number, uploadId: upload_id }
+    if part_number < bos_min_part_number() || part_number > bos_max_part_number() do
+      raise BceClientException, message: "Invalid part_number#{part_number}, The valid range is from #{bos_min_part_number()} to #{bos_max_part_number()}"
+    end
+
+    if part_size > bos_max_put_object_length() do
+      raise BceClientException, message: "Single part length should be less than #{bos_max_put_object_length()}"
+    end
+
+    headers = Map.merge(headers,
+      %{
+        http_content_length() => part_size,
+        http_content_type() => http_octet_stream(),
+      }
+    )
+
+    http_post() |> send_request(bucket_name, params, key, headers, data)
+  end
+
+  @doc """
+  Upload a part from file.
+  """
+  def upload_part_from_file(bucket_name, key, upload_id, part_number,
+    part_size, file_name, offset \\ 0, options \\ %{}) do
+    case :file.open(file_name, [:binary]) do
+      {:ok, f} ->
+        {:ok, data} = :file.pread(f, offset, part_size)
+        :file.close(f)
+        upload_part(bucket_name, key, upload_id, part_number, part_size, data, options)
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @doc """
+  Copy upload part.
+  """
+  def upload_part_copy(source_bucket_name, source_key, target_bucket_name, target_key, upload_id,
+    part_number, part_size, offset, options \\ %{}) do
+    headers = options
+    params = %{ partNumber: part_number, uploadId: upload_id }
+
+    headers = if headers["user-metadata"] != nil do
+      populate_headers_with_user_metadata(headers)
+    else
+      headers
+    end
+
+    headers = if headers["etag"] != nil do
+      Map.put(headers, http_bce_copy_source_if_match(), headers['etag'])
+    else
+      headers
+    end
+
+    headers = Map.put(headers,
+      http_bce_copy_source(),
+      BceSigner.get_canonical_uri_path("/#{source_bucket_name}/#{source_key}")
+    )
+
+    headers = Map.put(headers,
+      http_bce_copy_source_range(),
+      "bytes=#{offset}-#{offset + part_size - 1}"
+    )
+
+    http_put() |> send_request(target_bucket_name, params, target_key, headers)
+  end
+
+  @doc """
+  After finish all the task, complete multi_upload_file.
+  """
+  def complete_multipart_upload(bucket_name, key, upload_id, part_list, options \\ %{}) do
+    headers = options
+    params = %{ uploadId: upload_id }
+
+    headers = if headers["user-metadata"] != nil do
+      populate_headers_with_user_metadata(headers)
+    else
+      headers
+    end
+    part_list = Enum.map(part_list, fn item -> Map.put(item, "eTag", item["eTag"] |> String.replace("\"", "")) end)
+    body = %{ parts: part_list }
+    http_post() |> send_request(bucket_name, params, key, headers, body)
+  end
+
+  @doc """
+  List all the parts that have been upload success.
+  """
+  def list_parts(bucket_name, key, upload_id, options \\ %{}) do
+    params = Map.merge(%{ uploadId: upload_id }, options)
+    http_get() |> send_request(bucket_name, params, key)
+  end
+
+  @doc """
+  List all Multipart upload task which haven't been ended.(Completed Init_MultiPartUpload
+  but not completed Complete_MultiPartUpload or Abort_MultiPartUpload).
+  """
+  def list_multipart_uploads(bucket_name, options \\ %{}) do
+    params = Map.merge(%{ uploads: "" }, options)
+    http_get() |> send_request(bucket_name, params)
+  end
+
+  @doc """
+  Abort upload a part which is being uploading.
+  """
+  def abort_multipart_upload(bucket_name, key, upload_id) do
+    params = %{ uploadId: upload_id }
+    http_delete() |> send_request(bucket_name, params, key)
+  end
+
   defp base_url, do: "http://#{ElixirBceSdk.config[:endpoint]}"
   defp base_url(bucket_name), do: "http://#{bucket_name}.#{ElixirBceSdk.config[:endpoint]}"
 
@@ -411,7 +549,7 @@ defmodule ElixirBceSdk.Bos.Client do
   defp generate_response(response, return_body) do
     case response do
       { :ok, res } ->
-        if return_body do
+        if return_body && res.status_code == 200 do
           res.body
         else
           case  Poison.decode(res.body) do
