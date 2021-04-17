@@ -299,6 +299,35 @@ defmodule ElixirBceSdk.Bos.Client do
     base_url(bucket_name) <> path_uri
   end
 
+
+  @doc """
+  Copy one object to another object.
+  """
+
+  def copy_object(source_bucket_name, source_key, target_bucket_name, target_key, options \\ %{}) do
+    headers = options
+
+    headers = if headers["etag"] != nil do
+      Map.put(headers, http_bce_copy_source_if_match(), headers['etag'])
+    else
+      headers
+    end |> IO.inspect(label: "current_header")
+
+    headers = case headers["user-metadata"] do
+                nil ->
+                  Map.put(headers, http_bce_copy_meta_data_directive(), "copy")
+                _ ->
+                  headers = Map.put(headers, http_bce_copy_meta_data_directive(), "replace")
+                  populate_headers_with_user_metadata(headers)
+              end |> IO.inspect(label: "modified headers")
+
+    headers = Map.put(headers,
+      http_bce_copy_source(),
+      BceSigner.get_canonical_uri_path("/#{source_bucket_name}/#{source_key}")
+    )
+    http_put() |> send_request(target_bucket_name, %{}, target_key, headers)
+  end
+
   defp base_url, do: "http://#{ElixirBceSdk.config[:endpoint]}"
   defp base_url(bucket_name), do: "http://#{bucket_name}.#{ElixirBceSdk.config[:endpoint]}"
 
@@ -329,7 +358,7 @@ defmodule ElixirBceSdk.Bos.Client do
       true -> body
     end
 
-    headers = Map.to_list(headers) ++ [
+    headers = Enum.map(headers, fn{k,v} -> {k, Utils.to_s(v)} end) ++ [
       { http_user_agent(), ElixirBceSdk.config[:user_agent] },
       { http_content_length(), byte_size(body) },
       { http_bce_date(), sign_date_time },
@@ -384,5 +413,26 @@ defmodule ElixirBceSdk.Bos.Client do
       { :ok, status, _res } -> status
       { :error, res } -> { :error, res }
     end
+  end
+
+  defp populate_headers_with_user_metadata(%{"user-metadata" => %{} = user_metadata} = headers) do
+    meta_size = 0
+    {headers, meta_size} = Enum.reduce(user_metadata, {headers, meta_size},fn {k,v}, acc ->
+      {headers, size} = acc
+      k = Mbcs.encode!(k, :utf8)
+      v = Mbcs.encode!(v, :utf8)
+      normalized_key = http_bce_user_meta_data_prefix() <> k
+      size = size + String.length(normalized_key)
+      size = size + String.length(v)
+      {Map.put(headers, normalized_key, v), size}
+    end)
+    if meta_size > bos_max_user_metadata_size() do
+      raise BceClientException, message: "Metadata size should not be greater than #{bos_max_user_metadata_size()}"
+    end
+    Map.delete(headers, "user-metadata")
+  end
+
+  defp populate_headers_with_user_metadata(_) do
+    raise BceClientException, message: "user_metadata should be of type map."
   end
 end

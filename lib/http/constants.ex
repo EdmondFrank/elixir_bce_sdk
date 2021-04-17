@@ -4,6 +4,10 @@ defmodule ElixirBceSdk.Http.Constants do
   const :http_bce_prefix, "x-bce"
   const :http_bce_acl, "x-bce-acl"
   const :http_bce_date, "x-bce-date"
+  const :http_bce_copy_source, "x-bce-copy-source"
+  const :http_bce_user_meta_data_prefix, "x-bce-meta-"
+  const :http_bce_copy_source_if_match, "x-bce-copy-source-if-match"
+  const :http_bce_copy_meta_data_directive, "x-bce-metadata-directive"
 
   const :http_host, "Host"
   const :http_authorization, "Authorization"
