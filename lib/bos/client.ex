@@ -222,7 +222,7 @@ defmodule ElixirBceSdk.Bos.Client do
   """
   def put_object(bucket_name, key, data, content_md5, content_length, options) do
     if content_length > bos_max_put_object_length() do
-      raise BceClientException, message: "Object length should be less than #{bos_max_put_object_length()}"
+      raise BceClientException, message: "object length should be less than #{bos_max_put_object_length()}"
     else
       headers = Map.merge(
         %{
@@ -261,7 +261,7 @@ defmodule ElixirBceSdk.Bos.Client do
     case File.read(file_name) do
       {:ok, data} ->
         content_length = byte_size(data)
-        data_md5 = Utils.get_md5_from_file(file_name, content_length)
+        data_md5 = Utils.get_md5_from_file(file_name)
         put_object(bucket_name, key, data, data_md5, content_length, options)
       {:error, reason} ->
         {:error, reason}
@@ -332,7 +332,7 @@ defmodule ElixirBceSdk.Bos.Client do
   """
   def append_object(bucket_name, key, data, offset, content_md5, content_length, options \\ %{}) do
     if content_length > bos_max_append_object_length() do
-      raise BceClientException, message: "Object length should be less than #{bos_max_append_object_length()}. Use multi-part upload instead."
+      raise BceClientException, message: "object length should be less than #{bos_max_append_object_length()}. Use multi-part upload instead."
     end
     params = %{ append: "" }
     params = if offset != nil do
@@ -396,11 +396,11 @@ defmodule ElixirBceSdk.Bos.Client do
     headers = options
     params = %{ partNumber: part_number, uploadId: upload_id }
     if part_number < bos_min_part_number() || part_number > bos_max_part_number() do
-      raise BceClientException, message: "Invalid part_number#{part_number}, The valid range is from #{bos_min_part_number()} to #{bos_max_part_number()}"
+      raise BceClientException, message: "invalid part_number#{part_number}, The valid range is from #{bos_min_part_number()} to #{bos_max_part_number()}"
     end
 
     if part_size > bos_max_put_object_length() do
-      raise BceClientException, message: "Single part length should be less than #{bos_max_put_object_length()}"
+      raise BceClientException, message: "single part length should be less than #{bos_max_put_object_length()}"
     end
 
     headers = Map.merge(headers,
@@ -636,7 +636,7 @@ defmodule ElixirBceSdk.Bos.Client do
       {Map.put(headers, normalized_key, v), size}
     end)
     if meta_size > bos_max_user_metadata_size() do
-      raise BceClientException, message: "Metadata size should not be greater than #{bos_max_user_metadata_size()}"
+      raise BceClientException, message: "metadata size should not be greater than #{bos_max_user_metadata_size()}"
     end
     Map.delete(headers, "user-metadata")
   end

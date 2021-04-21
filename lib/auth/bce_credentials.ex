@@ -4,7 +4,7 @@ defmodule ElixirBceSdk.Auth.BceCredentials do
   Reference https://cloud.baidu.com/doc/Reference/s/Njwvz1wot
   """
   alias ElixirBceSdk.Auth.BceCredentials
-  defstruct access_key_id: nil, secret_access_key: nil, security_token: nil
+  defstruct [:access_key_id, :secret_access_key, :security_token]
 
   def new(access_key_id, secret_access_key, security_token \\ "") do
     %BceCredentials {

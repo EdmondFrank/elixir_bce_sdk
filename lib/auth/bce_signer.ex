@@ -8,13 +8,14 @@ defmodule ElixirBceSdk.Auth.BceSigner do
   import ElixirBceSdk.Utils
   import ElixirBceSdk.Http.Constants
 
-  def get_canonical_headers(headers, nil), do: get_canonical_headers(headers, ["host", "content-md5", "content-length", "content-type"])
+  def get_canonical_headers(headers, nil),
+    do: get_canonical_headers(headers, ["host", "content-md5", "content-length", "content-type"])
 
-  def get_canonical_headers(headers, headers_to_sign) do
+  def get_canonical_headers(headers, headers_to_sign) when is_list(headers_to_sign) do
 
     canonical_headers = headers
     |> Enum.filter(fn {k,v} ->
-      to_s_trim(v) != "" && (to_s_down(k) in headers_to_sign || to_s_down(k) |> String.starts_with?(http_bce_prefix()))
+      to_s_trim(v) != "" and (to_s_down(k) in headers_to_sign or to_s_down(k) |> String.starts_with?(http_bce_prefix()))
     end)
 
     ret_array = canonical_headers
@@ -28,15 +29,11 @@ defmodule ElixirBceSdk.Auth.BceSigner do
   end
 
   def get_canonical_uri_path(path) do
-    if to_string(path) == "" do
-      "/"
-    else
-      encoded_path = to_s_encode(path) |> String.replace("%2F", "/")
-      if encoded_path |> String.starts_with?("/") do
-        encoded_path
-      else
-        "/#{encoded_path}"
-      end
+    encoded_path = to_s_encode(path) |> String.replace("%2F", "/")
+    cond do
+      String.length(encoded_path) == 0 -> "/"
+      String.starts_with?(encoded_path, "/") -> encoded_path
+      true -> "/#{encoded_path}"
     end
   end
 
