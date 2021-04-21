@@ -7,7 +7,9 @@ defmodule ElixirBceSdk.MixProject do
       version: "0.1.0",
       elixir: "~> 1.11",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      description: description(),
+      package: package()
     ]
   end
 
@@ -21,13 +23,26 @@ defmodule ElixirBceSdk.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      # {:dep_from_hexpm, "~> 0.3.0"},
-      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
       {:mime, "~> 1.6"},
       {:poison, "~> 4.0"},
       {:httpoison, "~> 1.8"},
       {:elixir_mbcs, github: "edmondfrank/elixir-mbcs", tag: "0.1.3"},
       {:espec, "~> 1.8.3", only: :test},
     ]
+  end
+
+  defp package do
+    [
+      maintainers: ["Edmond Frank"],
+      licenses: ["MIT"],
+      links: %{"Github" => "https://github.com/EdmondFrank/elixir_bce_sdk"},
+      files: ~w(mix.exs README.md lib config)
+    ]
+  end
+
+  defp description() do
+    """
+    Baidu Could Storage SDK for Elixir
+    """
   end
 end
