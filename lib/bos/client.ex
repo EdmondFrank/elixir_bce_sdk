@@ -2,6 +2,7 @@ defmodule ElixirBceSdk.Bos.Client do
 
   alias HTTPoison.Request
   alias ElixirBceSdk.Utils
+  alias ElixirBceSdk.Config
   alias ElixirBceSdk.Auth.BceSigner
   alias ElixirBceSdk.Auth.BceCredentials
 
@@ -537,10 +538,10 @@ defmodule ElixirBceSdk.Bos.Client do
     http_delete() |> send_request(bucket_name, params, key)
   end
 
-  defp base_url, do: "http://#{ElixirBceSdk.config[:endpoint]}"
-  defp base_url(bucket_name), do: "http://#{bucket_name}.#{ElixirBceSdk.config[:endpoint]}"
+  defp base_url, do: "http://#{Config.endpoint()}"
+  defp base_url(bucket_name), do: "http://#{bucket_name}.#{Config.endpoint()}"
 
-  defp host, do: ElixirBceSdk.config[:endpoint]
+  defp host, do: Config.endpoint()
 
   defp send_request(
     http_method,
@@ -568,7 +569,7 @@ defmodule ElixirBceSdk.Bos.Client do
     end
 
     headers = Enum.map(headers, fn{k,v} -> {k, Utils.to_s(v)} end) ++ [
-      { http_user_agent(), ElixirBceSdk.config[:user_agent] },
+      { http_user_agent(), Config.user_agent() },
       { http_content_length(), byte_size(body) },
       { http_bce_date(), sign_date_time },
       { http_host(),  host() },

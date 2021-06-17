@@ -24,6 +24,7 @@ defmodule ElixirBceSdk.MixProject do
   defp deps do
     [
       {:mime, "~> 1.6"},
+      {:confex, "~> 3.5"},
       {:poison, "~> 4.0"},
       {:httpoison, "~> 1.8"},
       {:elixir_mbcs, github: "edmondfrank/elixir-mbcs", tag: "0.1.3"},

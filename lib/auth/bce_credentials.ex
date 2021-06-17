@@ -3,6 +3,7 @@ defmodule ElixirBceSdk.Auth.BceCredentials do
   module about authorization
   Reference https://cloud.baidu.com/doc/Reference/s/Njwvz1wot
   """
+  alias ElixirBceSdk.Config
   alias ElixirBceSdk.Auth.BceCredentials
   defstruct [:access_key_id, :secret_access_key, :security_token]
 
@@ -16,9 +17,9 @@ defmodule ElixirBceSdk.Auth.BceCredentials do
 
   def credentials do
     %BceCredentials{
-      access_key_id: ElixirBceSdk.config[:access_key_id],
-      secret_access_key: ElixirBceSdk.config[:secret_access_key],
-      security_token: ElixirBceSdk.config[:security_token]
+      access_key_id: Config.access_key_id(),
+      secret_access_key: Config.secret_access_key(),
+      security_token: Config.security_token()
     }
   end
 end

@@ -21,12 +21,22 @@ Then run `$ mix deps.get`
 # config/config.exs
 
 config :elixir_bce_sdk,
-  config: [
     access_key_id: "<your access_key_id>",
     secret_access_key: "<your secret_access_key>",
     security_token: "<your security token (optional)>",
-    endpoint: "<bos endpoint (eg: su.bcebos.com) >",
-  ]
+    endpoint: "<bos endpoint (eg: su.bcebos.com) >"
+```
+
+Or if you want to config them via run-time system environment variables:
+
+```elixir
+# config/config.exs
+
+config :elixir_bce_sdk,
+    access_key_id: {:system, "BOS_ACCESS_KEY_ID"},
+    secret_access_key: {:system, "BOS_SECRET_ACCESS_KEY"},
+    security_token: {:system, "BOS_SECURITY_TOKEN"},
+    endpoint: {:system, "BOS_ENDPOINT"}
 ```
 
 Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
