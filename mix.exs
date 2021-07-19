@@ -16,7 +16,7 @@ defmodule ElixirBceSdk.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger, :crypto, :httpoison, :mbcs]
+      extra_applications: [:logger, :crypto, :httpoison]
     ]
   end
 
@@ -27,7 +27,6 @@ defmodule ElixirBceSdk.MixProject do
       {:confex, "~> 3.5"},
       {:poison, "~> 4.0"},
       {:httpoison, "~> 1.8"},
-      {:elixir_mbcs, github: "edmondfrank/elixir-mbcs", tag: "0.1.3"},
       {:espec, "~> 1.8.3", only: :test},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
     ]

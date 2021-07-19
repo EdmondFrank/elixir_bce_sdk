@@ -35,8 +35,6 @@ defmodule ElixirBceSdk.Utils do
     meta_size = 0
     {headers, meta_size} = Enum.reduce(user_metadata, {headers, meta_size},fn {k,v}, acc ->
       {headers, size} = acc
-      k = Mbcs.encode!(k, :utf8)
-      v = Mbcs.encode!(v, :utf8)
       normalized_key = "x-bce-meta-" <> k
       size = size + String.length(normalized_key)
       size = size + String.length(v)
