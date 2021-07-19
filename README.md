@@ -10,7 +10,7 @@ by adding `elixir_bce_sdk` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    { :elixir_bce_sdk, github: "edmondfrank/elixr_bce_sdk" }
+    {:elixir_bce_sdk, "~> 0.1.0"}
   ]
 end
 ```

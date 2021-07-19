@@ -28,6 +28,7 @@ defmodule ElixirBceSdk.MixProject do
       {:poison, "~> 4.0"},
       {:httpoison, "~> 1.8"},
       {:espec, "~> 1.8.3", only: :test},
+      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
     ]
   end
