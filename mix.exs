@@ -29,6 +29,7 @@ defmodule ElixirBceSdk.MixProject do
       {:httpoison, "~> 1.8"},
       {:elixir_mbcs, github: "edmondfrank/elixir-mbcs", tag: "0.1.3"},
       {:espec, "~> 1.8.3", only: :test},
+      {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
     ]
   end
 

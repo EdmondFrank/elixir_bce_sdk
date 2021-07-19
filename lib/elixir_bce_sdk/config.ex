@@ -1,6 +1,8 @@
 defmodule ElixirBceSdk.Config do
 
-  alias ElixirBceSdk.MixProject
+  @version Mix.Project.config[:version]
+
+  def version(), do: @version
 
   [:access_key_id, :secret_access_key, :security_token, :bucket_name, :endpoint]
   |> Enum.map(fn config ->
@@ -11,6 +13,6 @@ defmodule ElixirBceSdk.Config do
     end
   end)
   def user_agent do
-    "bce-elixir-sdk/#{MixProject.project[:version]}"
+    "bce-elixir-sdk/#{version()}"
   end
 end

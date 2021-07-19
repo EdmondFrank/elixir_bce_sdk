@@ -6,7 +6,10 @@ defmodule ElixirBceSdk.Auth.BceSigner do
   alias ElixirBceSdk.Auth.BceCredentials
 
   import ElixirBceSdk.Utils
-  import ElixirBceSdk.Http.Constants
+
+  @bce_prefix "x-bce"
+  @authorization "authorization"
+
 
   def get_canonical_headers(headers, nil),
     do: get_canonical_headers(headers, ["host", "content-md5", "content-length", "content-type"])
@@ -15,15 +18,18 @@ defmodule ElixirBceSdk.Auth.BceSigner do
 
     canonical_headers = headers
     |> Enum.filter(fn {k,v} ->
-      to_s_trim(v) != "" and (to_s_down(k) in headers_to_sign or to_s_down(k) |> String.starts_with?(http_bce_prefix()))
+      to_s_trim(v) != "" and (to_s_down(k) in headers_to_sign or to_s_down(k) |> String.starts_with?(@bce_prefix))
     end)
 
     ret_array = canonical_headers
     |> Enum.map(fn {k,v} -> "#{to_s_down_encode(k)}:#{to_s_trim_encode(v)}" end)
+    |> Enum.sort
     |> Enum.join("\n")
+
 
     headers_array = canonical_headers
     |> Enum.map(fn {k,_} -> to_s_down(k) end)
+    |> Enum.sort
 
     { ret_array, headers_array }
   end
@@ -40,7 +46,7 @@ defmodule ElixirBceSdk.Auth.BceSigner do
   def get_canonical_querystring(nil, _), do: ""
   def get_canonical_querystring(params, _) when map_size(params) == 0, do: ""
   def get_canonical_querystring(params = %{}, for_signature) do
-    Enum.filter(params, fn {k, _} -> !for_signature || to_s_down(k) != to_s_down(http_authorization()) end)
+    Enum.filter(params, fn {k, _} -> !for_signature || to_s_down(k) != @authorization end)
     |> Enum.map(fn {k, v} -> "#{urlencode(to_string(k))}=#{urlencode(to_string(v))}" end)
     |> Enum.join("&")
   end
@@ -62,7 +68,7 @@ defmodule ElixirBceSdk.Auth.BceSigner do
 
     sign_key_info = "bce-auth-v1/#{credentials.access_key_id}/#{sign_date_time}/#{expiration_in_seconds}"
 
-    sign_key = :crypto.hmac(:sha256, credentials.secret_access_key, sign_key_info)
+    sign_key = :crypto.mac(:hmac, :sha256, credentials.secret_access_key, sign_key_info)
     |> Base.encode16
     |> String.downcase
 
@@ -74,7 +80,7 @@ defmodule ElixirBceSdk.Auth.BceSigner do
 
     canonical_request = Enum.join([http_method, canonical_uri, canonical_querystring, canonical_headers], "\n")
 
-    signature = :crypto.hmac(:sha256, sign_key, canonical_request)
+    signature = :crypto.mac(:hmac, :sha256, sign_key, canonical_request)
     |> Base.encode16
     |> String.downcase
 
