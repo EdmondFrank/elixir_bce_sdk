@@ -111,7 +111,7 @@ defmodule ElixirBceSdk.Bos.Object do
   def generate_pre_signed_url(bucket_name, key, opts \\ %{}) do
 
     params = Map.get(opts, :params, %{})
-    host = "#{bucket_name}.#{Config.endpoint()}"
+    host = "#{bucket_name}.#{Config.bos_endpoint()}"
     path = "/" <> key
     headers = Map.get(opts, :headers, %{}) |> Map.put("Host", host)
 

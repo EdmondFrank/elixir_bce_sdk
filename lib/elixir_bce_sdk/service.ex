@@ -1,6 +1,6 @@
 defmodule ElixirBceSdk.Service do
   alias ElixirBceSdk.Client
-  import ElixirBceSdk.Config, only: [endpoint: 0]
+  import ElixirBceSdk.Config, only: [bos_endpoint: 0]
 
 
   def get(bucket, object, opts \\ []) do
@@ -26,8 +26,8 @@ defmodule ElixirBceSdk.Service do
   defp request(verb, bucket, object, body, opts) do
     {host, resource} =
       case bucket do
-        <<_, _::binary>> -> {"#{bucket}.#{endpoint()}", "/#{bucket}/#{object}"}
-        _ -> {endpoint(), "/"}
+        <<_, _::binary>> -> {"#{bucket}.#{bos_endpoint()}", "/#{bucket}/#{object}"}
+        _ -> {bos_endpoint(), "/"}
       end
 
     Client.request(

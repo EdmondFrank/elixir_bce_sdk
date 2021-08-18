@@ -2,6 +2,19 @@
 
 Baidu Could Storage SDK for Elixir
 
+## Support
+- BOS
+  - [X] Bucket API
+  - [X] Object API
+  - [ ] Coming soon
+
+- BCM
+  - [X] get_metric_data
+  - [ ] put_metric_data
+
+- Coming soon
+
+
 ## Installation
 
 If [available in Hex](https://hex.pm/docs/publish), the package can be installed
@@ -10,7 +23,7 @@ by adding `elixir_bce_sdk` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:elixir_bce_sdk, "~> 0.1.0"}
+    {:elixir_bce_sdk, "~> 0.2.0"}
   ]
 end
 ```
@@ -23,7 +36,9 @@ Then run `$ mix deps.get`
 config :elixir_bce_sdk,
     access_key_id: "<your access_key_id>",
     secret_access_key: "<your secret_access_key>",
-    endpoint: "<bos endpoint (eg: su.bcebos.com) >"
+    bos_endpoint: "<bos endpoint (eg: su.bcebos.com)>",
+    bcm_user_id: "<bcm user id>",
+    bcm_endpoint: "<bcm endpoint (eg: bcm.su.baidubce.com)>"
 ```
 
 Or if you want to config them via run-time system environment variables:
@@ -34,7 +49,9 @@ Or if you want to config them via run-time system environment variables:
 config :elixir_bce_sdk,
     access_key_id: {:system, "BOS_ACCESS_KEY_ID"},
     secret_access_key: {:system, "BOS_SECRET_ACCESS_KEY"},
-    endpoint: {:system, "BOS_ENDPOINT"}
+    bos_endpoint: {:system, "BOS_ENDPOINT"},
+    bcm_user_id:  {:system, "BCM_USER_ID"},
+    bcm_endpoint: {:system, "BCM_ENDPOINT"}
 ```
 
 Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
@@ -193,3 +210,12 @@ ElixirBceSdk.Bos.Object.delete_object_acl("bucket-name", "object-key")
 ```
 
 See the [bos directory](lib/bos) for other features
+
+### BCM Api
+
+Get metric data
+```elixir
+# default get last 15 minues range metric data and `period_in_second` is 60
+# please use `h ElixirBceSdk.Bcm.Client.get_metric_data` to know more
+ElixirBceSdk.Bcm.Client.get_metric_data("BCE_BOS", "BucketObjectCount", "BucketId:maven-mirror")
+```

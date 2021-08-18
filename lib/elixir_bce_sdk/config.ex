@@ -4,7 +4,7 @@ defmodule ElixirBceSdk.Config do
 
   def version(), do: @version
 
-  [:access_key_id, :secret_access_key, :security_token, :bucket_name, :endpoint]
+  [:access_key_id, :secret_access_key, :security_token, :bucket_name, :bos_endpoint, :bcm_user_id, :bcm_endpoint]
   |> Enum.map(fn config ->
     def unquote(config)() do
       :elixir_bce_sdk

@@ -35,12 +35,22 @@ defmodule ElixirBceSdk.Client.Request do
       req.headers
       |> Map.put_new("Host", req.host)
       |> Map.put_new("User-Agent", user_agent())
+
+    additional_headers =
+    if req.resource do
+      headers
       |> Map.put_new_lazy("Content-Type", fn -> parse_content_type(req) end)
       |> Map.put_new_lazy("Content-MD5", fn -> calc_content_md5(req) end)
       |> Map.put_new_lazy("Content-Length", fn -> byte_size(req.body) end)
+    else
+      headers
+    end
+
+    final_headers =
+      additional_headers
       |> Map.put_new_lazy("x-bce-date", fn -> sign_date_time(req.timestamp) end)
 
-    Map.put(req, :headers, headers)
+    Map.put(req, :headers, final_headers)
   end
 
   def build_signed(fields) do
