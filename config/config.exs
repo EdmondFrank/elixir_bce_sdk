@@ -34,3 +34,6 @@ config :elixir_bce_sdk,
   bos_endpoint: "su.bcebos.com",
   bcm_user_id: "<bcm_user_id>",
   bcm_endpoint: "bcm.su.baidubce.com"
+
+config :elixir_bce_sdk, ElixirBceSdk.Client,
+  timeout: 30_000

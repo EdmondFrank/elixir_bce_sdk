@@ -2,6 +2,7 @@ defmodule ElixirBceSdk.Client do
   @moduledoc """
   Internal module
   """
+  @config Application.get_env(:elixir_bce_sdk, __MODULE__, [timeout: 30_000])
   alias ElixirBceSdk.Client.Request
   alias ElixirBceSdk.Client.Response
 
@@ -16,14 +17,16 @@ defmodule ElixirBceSdk.Client do
   defp do_request(req = %Request{http_method: "GET"}) do
     HTTPoison.get(
       Request.query_url(req),
-      req.headers
+      req.headers,
+      timeout: @config[:timeout]
     )
   end
 
   defp do_request(req = %Request{http_method: "HEAD"}) do
     HTTPoison.head(
       Request.query_url(req),
-      req.headers
+      req.headers,
+      timeout: @config[:timeout]
     )
   end
 
@@ -31,7 +34,8 @@ defmodule ElixirBceSdk.Client do
     HTTPoison.post(
       Request.query_url(req),
       req.body,
-      req.headers
+      req.headers,
+      timeout: @config[:timeout]
     )
   end
 
@@ -39,14 +43,16 @@ defmodule ElixirBceSdk.Client do
     HTTPoison.put(
       Request.query_url(req),
       req.body,
-      req.headers
+      req.headers,
+      timeout: @config[:timeout]
     )
   end
 
   defp do_request(req = %Request{http_method: "DELETE"}) do
     HTTPoison.delete(
       Request.query_url(req),
-      req.headers
+      req.headers,
+      timeout: @config[:timeout]
     )
   end
 end
