@@ -4,7 +4,7 @@ defmodule ElixirBceSdk.MixProject do
   def project do
     [
       app: :elixir_bce_sdk,
-      version: "0.2.0",
+      version: "0.2.1",
       elixir: "~> 1.11",
       start_permanent: Mix.env() == :prod,
       deps: deps(),

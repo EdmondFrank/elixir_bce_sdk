@@ -23,7 +23,7 @@ by adding `elixir_bce_sdk` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:elixir_bce_sdk, "~> 0.2.0"}
+    {:elixir_bce_sdk, "~> 0.2"}
   ]
 end
 ```
@@ -39,6 +39,9 @@ config :elixir_bce_sdk,
     bos_endpoint: "<bos endpoint (eg: su.bcebos.com)>",
     bcm_user_id: "<bcm user id>",
     bcm_endpoint: "<bcm endpoint (eg: bcm.su.baidubce.com)>"
+
+config :elixir_bce_sdk, ElixirBceSdk.Client,
+  timeout: 30_000
 ```
 
 Or if you want to config them via run-time system environment variables:
@@ -52,6 +55,9 @@ config :elixir_bce_sdk,
     bos_endpoint: {:system, "BOS_ENDPOINT"},
     bcm_user_id:  {:system, "BCM_USER_ID"},
     bcm_endpoint: {:system, "BCM_ENDPOINT"}
+
+config :elixir_bce_sdk, ElixirBceSdk.Client,
+  timeout: {:system, "TIMEOUT"}
 ```
 
 Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
